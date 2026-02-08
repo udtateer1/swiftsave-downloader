@@ -39,26 +39,32 @@ _ = load_heavy_engines()
 # --- CUSTOM CSS (Refresh Fix + Pro Design) ---
 st.markdown("""
     <style>
-    /* 1. Pull-to-Refresh & Scroll Bounce पूरी तरह बंद */
-    html, body, .stApp {
-        overscroll-behavior-y: contain !important; /* Refresh animation rokega */
-        overscroll-behavior: none !important;
-        overflow-anchor: none !important;
-        touch-action: pan-x pan-y !important; /* Sirf scrolling allow karega, gestures nahi */
+    /* 1. NUCLEAR FIX: Browser Window ko Lock karo */
+    html, body {
+        position: fixed !important; /* Ye page ko hilne se rokega */
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important; /* Bahar ki scrolling band */
+        overscroll-behavior: none !important; /* Refresh animation band */
     }
-    
-    /* 2. Header & Footer Gayab (Extra Space Hatao) */
-    header, footer, #MainMenu {
+
+    /* 2. App ke andar scrolling chalu rakho */
+    .stApp {
+        overflow-y: auto !important; /* Sirf yahan scroll hoga */
+        height: 100vh !important;
+        width: 100% !important;
+        overscroll-behavior: none !important; /* Yahan bhi refresh block */
+    }
+
+    /* 3. Upar ka Header aur Gap Gayab */
+    header, [data-testid="stHeader"] {
         display: none !important;
         visibility: hidden !important;
-        height: 0px !important;
     }
     
-    /* 3. Top Gap Remove (Taaki upar khinchne ki jagah hi na bache) */
     .block-container {
-        padding-top: 0rem !important;
+        padding-top: 0rem !important; /* Upar koi jagah mat chhodo */
         padding-bottom: 5rem !important;
-        margin-top: -20px !important; /* Thoda aur upar khincho */
     }
 
     /* 4. Buttons Design */
@@ -70,22 +76,6 @@ st.markdown("""
         font-weight: bold; 
         border: none; 
         padding: 12px;
-        box-shadow: 0px 4px 6px rgba(0,0,0,0.2);
-    }
-    .stButton>button:active {
-        background-color: #00c853;
-        transform: scale(0.98);
-    }
-
-    /* 5. Dashboard Cards Styling */
-    .dashboard-card {
-        background-color: #1e1e1e; 
-        padding: 15px; 
-        border-radius: 15px; 
-        border: 1px solid #333; 
-        text-align: center;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
     </style>
     """, unsafe_allow_html=True)
