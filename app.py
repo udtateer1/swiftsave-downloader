@@ -110,8 +110,43 @@ elif selected == "Vault":
             st.rerun()
 
 # --- 3. PDF TOOLS SECTION ---
+# --- 3. PDF TOOLS SECTION (UPDATED) ---
 elif selected == "PDF Tools":
-    st.title("📄 PDF Converter Suite")
-    st.write("Coming Soon in Pro Version...")
-    st.info("Yahan hum PDF Merge aur Image-to-PDF add karenge.")
+    st.title("📄 PDF Master Tools")
+    
+    tab1, tab2 = st.tabs(["🖼️ Image to PDF", "➕ Merge PDFs"])
+    
+    # Tool 1: Image to PDF
+    with tab1:
+        st.header("Convert Photos to PDF")
+        uploaded_images = st.file_uploader("Select Images (JPG/PNG)", accept_multiple_files=True, type=["jpg", "png"])
+        
+        if uploaded_images:
+            if st.button("Convert to PDF"):
+                from PIL import Image
+                images = [Image.open(file).convert("RGB") for file in uploaded_images]
+                pdf_path = "converted_photos.pdf"
+                images[0].save(pdf_path, save_all=True, append_images=images[1:])
+                
+                with open(pdf_path, "rb") as f:
+                    st.download_button("⬇️ Download PDF", f, file_name="my_photos.pdf", mime="application/pdf")
+                st.success("Badhai ho! Photos PDF ban gayi.")
 
+    # Tool 2: Merge PDFs
+    with tab2:
+        st.header("Join Multiple PDFs")
+        uploaded_pdfs = st.file_uploader("Select PDF Files", accept_multiple_files=True, type="pdf")
+        
+        if uploaded_pdfs:
+            if st.button("Merge PDFs Now"):
+                from PyPDF2 import PdfMerger
+                merger = PdfMerger()
+                for pdf in uploaded_pdfs:
+                    merger.append(pdf)
+                
+                merger.write("merged_document.pdf")
+                merger.close()
+                
+                with open("merged_document.pdf", "rb") as f:
+                    st.download_button("⬇️ Download Merged PDF", f, file_name="combined.pdf", mime="application/pdf")
+                st.success("Saari PDFs jud gayi hain!")
