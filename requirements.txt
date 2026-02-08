@@ -13,3 +13,4 @@ ffmpeg-python
 textblob
 requests
 Pillow
+deep-translator
