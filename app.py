@@ -36,46 +36,52 @@ def load_heavy_engines():
 
 _ = load_heavy_engines()
 
-# --- CUSTOM CSS (Refresh Fix + Pro Design) ---
+# --- CUSTOM CSS (Smooth Scroll + No Refresh) ---
 st.markdown("""
     <style>
-    /* 1. NUCLEAR FIX: Browser Window ko Lock karo */
+    /* 1. Reset: Pehle sab kuch normal karo */
+    * {
+        box-sizing: border-box;
+    }
+
+    /* 2. Main Fix: Scrolling chalu, lekin "Khinchawat" (Refresh) band */
     html, body {
-        position: fixed !important; /* Ye page ko hilne se rokega */
-        width: 100% !important;
-        height: 100% !important;
-        overflow: hidden !important; /* Bahar ki scrolling band */
-        overscroll-behavior: none !important; /* Refresh animation band */
+        overscroll-behavior: none !important; /* Ye magic line hai jo refresh rokti hai */
+        overflow-y: auto !important; /* Ye scrolling ko wapas smooth banati hai */
+        height: 100%;
     }
 
-    /* 2. App ke andar scrolling chalu rakho */
+    /* 3. App Container ko bhi control karo */
     .stApp {
-        overflow-y: auto !important; /* Sirf yahan scroll hoga */
-        height: 100vh !important;
-        width: 100% !important;
-        overscroll-behavior: none !important; /* Yahan bhi refresh block */
+        overscroll-behavior: none !important;
+        background-color: #0e1117; /* Dark background fix */
     }
 
-    /* 3. Upar ka Header aur Gap Gayab */
+    /* 4. Header Gayab (Taaki upar galti se click na ho) */
     header, [data-testid="stHeader"] {
         display: none !important;
-        visibility: hidden !important;
-    }
-    
-    .block-container {
-        padding-top: 0rem !important; /* Upar koi jagah mat chhodo */
-        padding-bottom: 5rem !important;
+        height: 0px !important;
     }
 
-    /* 4. Buttons Design */
+    /* 5. Mobile View Optimization */
+    .block-container {
+        padding-top: 0rem !important;
+        padding-bottom: 5rem !important;
+        max-width: 100% !important;
+    }
+
+    /* 6. Buttons & Cards Design (Same as before) */
     .stButton>button {
-        width: 100%; 
-        border-radius: 12px; 
-        background-color: #00e676; 
-        color: black; 
-        font-weight: bold; 
-        border: none; 
-        padding: 12px;
+        width: 100%; border-radius: 12px; 
+        background-color: #00e676; color: black; 
+        font-weight: bold; border: none; padding: 12px;
+        box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .dashboard-card {
+        background-color: #1e1e1e; padding: 15px; 
+        border-radius: 15px; border: 1px solid #333; 
+        text-align: center; margin-bottom: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
