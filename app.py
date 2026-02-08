@@ -36,28 +36,56 @@ def load_heavy_engines():
 
 _ = load_heavy_engines()
 
+# --- CUSTOM CSS (Refresh Fix + Pro Design) ---
 st.markdown("""
     <style>
-    /* 1. Pull-to-Refresh Band Karne Ka Code */
-    html, body {
-        overscroll-behavior-y: none; /* Ye refresh ko rokega */
+    /* 1. Pull-to-Refresh & Scroll Bounce पूरी तरह बंद */
+    html, body, .stApp {
+        overscroll-behavior-y: contain !important; /* Refresh animation rokega */
+        overscroll-behavior: none !important;
+        overflow-anchor: none !important;
+        touch-action: pan-x pan-y !important; /* Sirf scrolling allow karega, gestures nahi */
     }
     
-    /* Buttons Design */
-    .stButton>button {width: 100%; border-radius: 12px; background-color: #00e676; color: black; font-weight: bold; border: none; padding: 10px;}
-    .stButton>button:hover {background-color: #00c853; color: white;}
+    /* 2. Header & Footer Gayab (Extra Space Hatao) */
+    header, footer, #MainMenu {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+    }
     
-    /* Header Gayab */
-    header {visibility: hidden;}
-    
-    /* Dashboard Cards */
-    .dashboard-card {background-color: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: center;}
-    .big-font {font-size: 24px !important; font-weight: bold;}
-    
-    /* Mobile View Fixes */
+    /* 3. Top Gap Remove (Taaki upar khinchne ki jagah hi na bache) */
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 0rem !important;
         padding-bottom: 5rem !important;
+        margin-top: -20px !important; /* Thoda aur upar khincho */
+    }
+
+    /* 4. Buttons Design */
+    .stButton>button {
+        width: 100%; 
+        border-radius: 12px; 
+        background-color: #00e676; 
+        color: black; 
+        font-weight: bold; 
+        border: none; 
+        padding: 12px;
+        box-shadow: 0px 4px 6px rgba(0,0,0,0.2);
+    }
+    .stButton>button:active {
+        background-color: #00c853;
+        transform: scale(0.98);
+    }
+
+    /* 5. Dashboard Cards Styling */
+    .dashboard-card {
+        background-color: #1e1e1e; 
+        padding: 15px; 
+        border-radius: 15px; 
+        border: 1px solid #333; 
+        text-align: center;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
     </style>
     """, unsafe_allow_html=True)
