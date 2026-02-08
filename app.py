@@ -12,8 +12,20 @@ st.set_page_config(page_title="EliteVault Pro", page_icon="🔒", layout="center
 # --- Custom CSS (Pro Design ke liye) ---
 st.markdown("""
     <style>
+    /* Buttons ka design */
     .stButton>button {width: 100%; border-radius: 20px; background-color: #00e676; color: black; font-weight: bold;}
     .stTextInput>div>div>input {border-radius: 10px;}
+    
+    /* Upar ka Header aur GitHub icon gayab karne ke liye */
+    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* Thoda padding kam karne ke liye taaki app upar se shuru ho */
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+    }
     </style>
     """, unsafe_allow_html=True)
 
