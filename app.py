@@ -38,11 +38,27 @@ _ = load_heavy_engines()
 
 st.markdown("""
     <style>
+    /* 1. Pull-to-Refresh Band Karne Ka Code */
+    html, body {
+        overscroll-behavior-y: none; /* Ye refresh ko rokega */
+    }
+    
+    /* Buttons Design */
     .stButton>button {width: 100%; border-radius: 12px; background-color: #00e676; color: black; font-weight: bold; border: none; padding: 10px;}
     .stButton>button:hover {background-color: #00c853; color: white;}
+    
+    /* Header Gayab */
     header {visibility: hidden;}
+    
+    /* Dashboard Cards */
     .dashboard-card {background-color: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: center;}
     .big-font {font-size: 24px !important; font-weight: bold;}
+    
+    /* Mobile View Fixes */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 5rem !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
