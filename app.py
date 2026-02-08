@@ -1,13 +1,18 @@
-# --- ERROR FIX: Audioop Patch ---
-import pyaudioop
-import sys
-sys.modules['audioop'] = pyaudioop 
-
 import streamlit as st
+import sys
+import os
+
+# --- SAFETY BLOCK (Ye App ko Crash hone se bachayega) ---
+try:
+    import pyaudioop
+    sys.modules['audioop'] = pyaudioop
+except ImportError:
+    pass  # Agar tool nahi mila toh bhi app chalta rahega
+
+# --- Baki Imports ---
 from streamlit_option_menu import option_menu
 import asyncio
 import edge_tts
-import os
 from pydub import AudioSegment
 from PyPDF2 import PdfReader
 from docx import Document
@@ -24,313 +29,106 @@ st.set_page_config(page_title="Elite Studio AI", page_icon="🎛️", layout="wi
 st.markdown("""
     <style>
     .stButton>button {width: 100%; border-radius: 20px; background-color: #ff4b4b; color: white; font-weight: bold;}
-    .music-card {background-color: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;}
     header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 🥁 BEAT LIBRARY (Royalty Free) ---
+# --- 🥁 BEAT LIBRARY ---
 BEATS = {
-    "🔥 Hip Hop / Rap Beat": "https://www.bensound.com/bensound-music/bensound-dubstep.mp3",
-    "🎹 Sad Piano (Shayari)": "https://www.bensound.com/bensound-music/bensound-sadday.mp3",
-    "🎸 Romantic Guitar": "https://www.bensound.com/bensound-music/bensound-love.mp3",
-    "⚡ High Energy (Action)": "https://www.bensound.com/bensound-music/bensound-evolution.mp3",
-    "🧘 Lo-Fi (Relax)": "https://www.bensound.com/bensound-music/bensound-slowmotion.mp3"
+    "🔥 Hip Hop": "https://www.bensound.com/bensound-music/bensound-dubstep.mp3",
+    "🎹 Sad Piano": "https://www.bensound.com/bensound-music/bensound-sadday.mp3",
+    "🎸 Romantic": "https://www.bensound.com/bensound-music/bensound-love.mp3",
+    "⚡ Action": "https://www.bensound.com/bensound-music/bensound-evolution.mp3"
 }
 
 # --- 🎤 ARTIST VOICES ---
 ARTISTS = {
-    "YoYo (Rapper - Fast)": {"voice": "hi-IN-MadhurNeural", "rate": "+20%", "pitch": "-5Hz"},
-    "Gulzar (Poet - Slow)": {"voice": "ur-PK-SalmanNeural", "rate": "-15%", "pitch": "-10Hz"},
-    "Simran (Melodic)": {"voice": "hi-IN-SwaraNeural", "rate": "+0%", "pitch": "+5Hz"},
-    "Jarvis (Robotic)": {"voice": "en-US-ChristopherNeural", "rate": "+5%", "pitch": "+0Hz"}
+    "YoYo (Rapper)": {"voice": "hi-IN-MadhurNeural", "rate": "+20%", "pitch": "-5Hz"},
+    "Gulzar (Poet)": {"voice": "ur-PK-SalmanNeural", "rate": "-15%", "pitch": "-10Hz"},
+    "Simran (Singer)": {"voice": "hi-IN-SwaraNeural", "rate": "+0%", "pitch": "+5Hz"}
 }
 
 # --- HELPER FUNCTIONS ---
 def download_file(url, filename):
     try:
         response = requests.get(url, timeout=10)
-        with open(filename, "wb") as f:
-            f.write(response.content)
+        with open(filename, "wb") as f: f.write(response.content)
         return True
     except: return False
 
 async def generate_vocals(text, artist, output_file):
-    voice = ARTISTS[artist]['voice']
-    rate = ARTISTS[artist]['rate']
-    pitch = ARTISTS[artist]['pitch']
-    communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
-    await communicate.save(output_file)
+    try:
+        data = ARTISTS[artist]
+        communicate = edge_tts.Communicate(text, data['voice'], rate=data['rate'], pitch=data['pitch'])
+        await communicate.save(output_file)
+    except Exception as e: st.error(f"Voice Error: {e}")
 
 def mix_song(vocals_path, beat_path, output_path):
     try:
         vocals = AudioSegment.from_file(vocals_path)
-        
         if os.path.exists(beat_path):
-            beat = AudioSegment.from_file(beat_path)
-            beat = beat - 10  # Beat volume kam karo taaki lyrics sunayi dein
-            
-            # Loop Beat to match Lyrics
+            beat = AudioSegment.from_file(beat_path) - 10
+            # Loop Beat
             if len(beat) < len(vocals):
                 beat = beat * (len(vocals) // len(beat) + 1)
-            
-            beat = beat[:len(vocals) + 2000] # Beat ko thoda lamba rakho
-            final = beat.overlay(vocals, position=500) # Vocals 0.5 sec baad shuru honge
+            final = beat[:len(vocals)+2000].overlay(vocals, position=500)
             final.export(output_path, format="mp3")
         else:
             vocals.export(output_path, format="mp3")
-    except Exception as e:
-        st.error(f"Mixing Error: {e}")
+    except Exception as e: st.error(f"Mixing Error: {e}")
 
 # --- APP NAVIGATION ---
 selected = option_menu(
     menu_title=None,
-    options=["Music Lab", "Story Mode", "Downloader", "Vault"],
-    icons=["music-note-list", "book", "cloud-download", "lock"],
+    options=["Music Lab", "Pocket FM", "Downloader", "Vault"],
+    icons=["music-note-list", "mic", "cloud-download", "lock"],
     default_index=0,
     orientation="horizontal",
 )
 
-# --- 1. 🎵 MUSIC LAB (Suno Style) ---
+# --- 1. MUSIC LAB ---
 if selected == "Music Lab":
-    st.title("🎵 AI Music Lab (Rap & Shayari)")
-    st.caption("Lyrics likho, Beat chuno, aur Gaana banao!")
-
-    col1, col2 = st.columns([1, 1])
-
+    st.title("🎵 AI Music Studio")
+    col1, col2 = st.columns(2)
+    
     with col1:
-        st.subheader("✍️ Lyrics / Bol")
-        lyrics = st.text_area("Apna Gaana Yahan Likhein:", height=250, 
-            placeholder="Verse 1:\nYo, this is the story,\nOf a coder's glory...\n\n(Tip: Rhyming lines likho badhiya sound karega)")
-
+        lyrics = st.text_area("Lyrics / Bol:", height=200, placeholder="Likho apni rap ya shayari...")
     with col2:
-        st.subheader("🎛️ Style & Beat")
-        
-        # Beat Selection
-        selected_beat = st.selectbox("Select Beat:", list(BEATS.keys()))
-        
-        # Artist Selection
-        selected_artist = st.radio("Select Artist:", list(ARTISTS.keys()))
-        
-        st.info(f"Artist Style: {selected_artist}")
+        beat = st.selectbox("Beat Style:", list(BEATS.keys()))
+        artist = st.radio("Artist:", list(ARTISTS.keys()))
 
     if st.button("💿 Create Song"):
-        if not lyrics:
-            st.error("Lyrics toh likho ustad!")
+        if not lyrics: st.error("Lyrics missing!")
         else:
-            progress = st.progress(0)
-            status = st.empty()
-            
-            try:
-                # 1. Vocals
-                status.text("🎤 Recording Vocals...")
-                asyncio.run(generate_vocals(lyrics, selected_artist, "vocals.mp3"))
-                progress.progress(50)
-                
-                # 2. Beat & Mix
-                status.text("🎹 Adding Beat & Mastering...")
-                beat_url = BEATS[selected_beat]
-                if download_file(beat_url, "beat.mp3"):
+            with st.spinner("Recording..."):
+                asyncio.run(generate_vocals(lyrics, artist, "vocals.mp3"))
+                if download_file(BEATS[beat], "beat.mp3"):
                     mix_song("vocals.mp3", "beat.mp3", "final_song.mp3")
-                else:
-                    st.warning("Beat download nahi hui, sirf vocals aayenge.")
-                    os.rename("vocals.mp3", "final_song.mp3")
-                
-                progress.progress(100)
-                status.success("✅ Song Ready!")
-                
-                st.audio("final_song.mp3")
-                with open("final_song.mp3", "rb") as f:
-                    st.download_button("⬇️ Download Song", f, file_name="My_AI_Song.mp3")
-                    
-            except Exception as e:
-                st.error(f"Error: {e}")
+                    st.audio("final_song.mp3")
+                    with open("final_song.mp3", "rb") as f:
+                        st.download_button("⬇️ Download Song", f, file_name="My_Song.mp3")
 
-
-# --- 2. STORY MODE (Pocket FM) ---
-elif selected == "Story Mode":
-    st.title("🎙️ Pocket FM Studio")
-    # (Pichla wala same code yahan maintain rahega bas Music Lab alag hai)
-    # Space bachane ke liye maine yahan short rakha hai, par aap pichla code yahan use kar sakte ho.
-    st.info("Story Mode ke liye 'Music Lab' tab se switch karein.")
+# --- 2. POCKET FM (Short Version) ---
+elif selected == "Pocket FM":
+    st.title("🎙️ Pocket FM Story")
+    text = st.text_area("Story Text:", height=150)
+    if st.button("Generate Story Audio"):
+        asyncio.run(generate_vocals(text, "Gulzar (Poet)", "story.mp3"))
+        st.audio("story.mp3")
 
 # --- 3. DOWNLOADER ---
 elif selected == "Downloader":
-    st.title("🎬 4K Downloader")
+    st.title("🎬 Downloader")
     url = st.text_input("Link:")
-    if st.button("Process"):
+    if st.button("Download"):
         with yt_dlp.YoutubeDL({'quiet':True}) as ydl:
             try:
                 info = ydl.extract_info(url, download=False)
-                st.image(info['thumbnail'])
-                st.link_button("Download", info['url'])
-            except: st.error("Link Invalid")
+                st.link_button("Download Video", info['url'])
+            except: st.error("Invalid Link")
 
 # --- 4. VAULT ---
 elif selected == "Vault":
     st.title("🔐 Vault")
     if st.text_input("PIN", type="password") == "1234":
-        st.success("Unlocked")
-        st.file_uploader("Files")
-
-# --- HELPER FUNCTIONS (Yahan galti thi, ab sahi hai) ---
-
-def extract_text_from_epub(epub_path):
-    try:
-        book = epub.read_epub(epub_path)
-        text = []
-        for item in book.get_items():
-            if item.get_type() == ebooklib.ITEM_DOCUMENT:
-                soup = BeautifulSoup(item.get_body_content(), 'html.parser')
-                text.append(soup.get_text())
-        return " ".join(text) # Ye line ab sahi jagah hai
-    except: return ""
-
-def extract_text_from_docx(docx_path):
-    try:
-        doc = Document(docx_path)
-        return " ".join([para.text for para in doc.paragraphs])
-    except: return ""
-
-def analyze_sentiment(text):
-    """Text ka mood pehchanta hai"""
-    blob = TextBlob(text[:2000]) # Shuruwat padh kar mood batayega
-    polarity = blob.sentiment.polarity
-    if polarity < -0.2: return "Sad"
-    elif polarity > 0.4: return "Happy"
-    elif "love" in text.lower(): return "Romantic"
-    elif "kill" in text.lower() or "gun" in text.lower(): return "Suspense"
-    else: return "Chill"
-
-def download_music(url, filename):
-    response = requests.get(url)
-    with open(filename, "wb") as f:
-        f.write(response.content)
-
-async def generate_tts(text, voice, output_file):
-    communicate = edge_tts.Communicate(text, voice)
-    await communicate.save(output_file)
-
-def mix_audio(voice_file, music_file, output_file):
-    voice = AudioSegment.from_file(voice_file)
-    music = AudioSegment.from_file(music_file)
-    
-    # Music Volume Low (-20dB)
-    music = music - 18
-    
-    # Loop Music to match Voice length
-    if len(music) < len(voice):
-        loops = len(voice) // len(music) + 1
-        music = music * loops
-    
-    # Trim & Overlay
-    music = music[:len(voice)]
-    final = voice.overlay(music)
-    final.export(output_file, format="mp3")
-
-# --- APP LAYOUT ---
-selected = option_menu(
-    menu_title=None,
-    options=["Pocket Studio", "Downloader", "Vault"],
-    icons=["mic", "cloud-download", "lock"],
-    default_index=0,
-    orientation="horizontal",
-)
-
-# --- 1. POCKET STUDIO (Combined Features) ---
-if selected == "Pocket Studio":
-    st.title("🎙️ Pocket FM Maker (Auto-DJ)")
-    st.caption("Upload Novel/PDF -> Get Audio with Music")
-    
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        input_type = st.radio("Input Source:", ["Paste Text", "Upload File (PDF/EPUB/DOCX)"], horizontal=True)
-        raw_text = ""
-        
-        if input_type == "Paste Text":
-            raw_text = st.text_area("Story text here...", height=300)
-        else:
-            uploaded_file = st.file_uploader("Select Book", type=['pdf', 'docx', 'epub', 'txt'])
-            if uploaded_file:
-                if uploaded_file.name.endswith('.pdf'):
-                    reader = PdfReader(uploaded_file)
-                    raw_text = " ".join([page.extract_text() for page in reader.pages])
-                elif uploaded_file.name.endswith('.docx'):
-                    raw_text = extract_text_from_docx(uploaded_file)
-                elif uploaded_file.name.endswith('.epub'):
-                    with open("temp.epub", "wb") as f: f.write(uploaded_file.getbuffer())
-                    raw_text = extract_text_from_epub("temp.epub")
-                elif uploaded_file.name.endswith('.txt'):
-                    raw_text = uploaded_file.read().decode("utf-8")
-                st.success(f"File Loaded: {len(raw_text)} chars")
-
-    with col2:
-        st.subheader("⚙️ Audio Settings")
-        voices = {
-            "🇮🇳 Hindi Male (Madhur)": "hi-IN-MadhurNeural",
-            "🇮🇳 Hindi Female (Swara)": "hi-IN-SwaraNeural",
-            "🇮🇳 English Male (Prabhat)": "en-IN-PrabhatNeural",
-            "🇮🇳 English Female (Neerja)": "en-IN-NeerjaNeural"
-        }
-        selected_voice = st.selectbox("Narrator:", list(voices.keys()))
-        auto_mode = st.checkbox("🤖 Auto-Detect Background Music", value=True)
-        
-        manual_mood = "Chill"
-        if not auto_mode:
-            manual_mood = st.selectbox("Select Music Mood:", list(MOOD_MUSIC.keys()))
-
-    if st.button("✨ Create Audiobook"):
-        if not raw_text:
-            st.error("Text missing!")
-        else:
-            progress = st.progress(0)
-            status = st.empty()
-            try:
-                # 1. Generate Voice (Chunking 50k chars for safety)
-                status.text("🗣️ Generating Voiceover...")
-                voice_code = voices[selected_voice]
-                # Processing first 50,000 chars to avoid timeout in free cloud
-                safe_text = raw_text[:50000] 
-                asyncio.run(generate_tts(safe_text, voice_code, "voice.mp3"))
-                progress.progress(40)
-                
-                # 2. Music Logic
-                mood = manual_mood
-                if auto_mode:
-                    status.text("🧠 Analyzing Story Mood...")
-                    mood = analyze_sentiment(safe_text)
-                    st.info(f"Detected Scene Mood: **{mood}**")
-                
-                # 3. Mixing
-                status.text(f"🎵 Mixing {mood} Music...")
-                music_url = MOOD_MUSIC[mood]
-                download_music(music_url, "bg_music.mp3")
-                mix_audio("voice.mp3", "bg_music.mp3", "final_story.mp3")
-                
-                progress.progress(100)
-                status.success("✅ Audiobook Ready!")
-                st.audio("final_story.mp3")
-                with open("final_story.mp3", "rb") as f:
-                    st.download_button("⬇️ Download MP3", f, file_name="My_Story.mp3")
-            except Exception as e:
-                st.error(f"Error: {e}")
-
-# --- 2. DOWNLOADER ---
-elif selected == "Downloader":
-    st.title("🎬 4K Downloader")
-    url = st.text_input("Link:")
-    if st.button("Process"):
-        try:
-            with yt_dlp.YoutubeDL({'quiet':True}) as ydl:
-                info = ydl.extract_info(url, download=False)
-                st.image(info['thumbnail'])
-                st.link_button("Download", info['url'])
-        except: st.error("Invalid Link")
-
-# --- 3. VAULT ---
-elif selected == "Vault":
-    st.title("🔐 Vault")
-    if st.text_input("PIN", type="password") == "1234":
-        st.success("Unlocked")
-        st.file_uploader("Files", accept_multiple_files=True)
+        st.file_uploader("Secret Files")
