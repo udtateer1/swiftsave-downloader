@@ -1,3 +1,9 @@
 streamlit
 yt-dlp
+st-pages
+streamlit-option-menu
+cryptography
+Pillow
+PyPDF2
 validators
+ffmpeg-python
