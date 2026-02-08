@@ -1,9 +1,12 @@
 streamlit
-yt-dlp
-st-pages
 streamlit-option-menu
+yt-dlp
 cryptography
 Pillow
 PyPDF2
 validators
 ffmpeg-python
+edge-tts
+deep-translator
+fpdf
+beautifulsoup4
