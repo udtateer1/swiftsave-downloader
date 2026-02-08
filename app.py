@@ -1,39 +1,152 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
-import yt_dlp
 import asyncio
 import edge_tts
 import os
 from pydub import AudioSegment
 from PyPDF2 import PdfReader
-from docx import Document
-import ebooklib
-from ebooklib import epub
-from bs4 import BeautifulSoup
+from textblob import TextBlob  # Dimaag (Sentiment Analysis)
+import requests
 
-# --- Page Config & Hide Menu ---
-st.set_page_config(page_title="EliteVault Ultra", page_icon="🎧", layout="wide")
+# --- Page Config ---
+st.set_page_config(page_title="Pocket FM Maker", page_icon="🎙️", layout="wide")
 
 st.markdown("""
     <style>
-    .stButton>button {width: 100%; border-radius: 20px; background-color: #00e676; color: black; font-weight: bold;}
+    .stButton>button {width: 100%; border-radius: 20px; background-color: #ff4b4b; color: white; font-weight: bold;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .block-container {padding-top: 1rem;}
-    /* Custom Progress Bar */
-    .stProgress > div > div > div > div {background-color: #00e676;}
     </style>
     """, unsafe_allow_html=True)
 
+# --- 🎵 ONLINE MUSIC LIBRARY (Copyright Free Links) ---
+# Aap baad mein apne links bhi daal sakte ho
+MOOD_MUSIC = {
+    "Sad": "https://www.bensound.com/bensound-music/bensound-sadday.mp3",
+    "Happy": "https://www.bensound.com/bensound-music/bensound-ukulele.mp3",
+    "Suspense": "https://www.bensound.com/bensound-music/bensound-epic.mp3",
+    "Romantic": "https://www.bensound.com/bensound-music/bensound-love.mp3",
+    "Chill": "https://www.bensound.com/bensound-music/bensound-slowmotion.mp3"
+}
+
 # --- HELPER FUNCTIONS ---
-def extract_text_from_epub(epub_path):
-    book = epub.read_epub(epub_path)
-    text = []
-    for item in book.get_items():
-        if item.get_type() == ebooklib.ITEM_DOCUMENT:
-            soup = BeautifulSoup(item.get_body_content(), 'html.parser')
-            text.append(soup.get_text())
+def analyze_sentiment(text):
+    """Text padh kar mood batata hai"""
+    blob = TextBlob(text)
+    polarity = blob.sentiment.polarity # -1 (Negative) to +1 (Positive)
+    
+    if polarity < -0.3: return "Sad"
+    elif polarity > 0.3: return "Happy"
+    elif "love" in text.lower() or "pyaar" in text.lower(): return "Romantic"
+    elif "kill" in text.lower() or "gun" in text.lower() or "run" in text.lower(): return "Suspense"
+    else: return "Chill"
+
+def download_music(url, filename):
+    response = requests.get(url)
+    with open(filename, "wb") as f:
+        f.write(response.content)
+
+async def generate_tts(text, voice, output_file):
+    communicate = edge_tts.Communicate(text, voice)
+    await communicate.save(output_file)
+
+def mix_audio(voice_file, music_file, output_file):
+    voice = AudioSegment.from_file(voice_file)
+    music = AudioSegment.from_file(music_file)
+    
+    # Music Volume Low karo (-20dB)
+    music = music - 20
+    
+    # Loop Music
+    if len(music) < len(voice):
+        music = music * (len(voice) // len(music) + 1)
+    
+    # Trim & Overlay
+    music = music[:len(voice)]
+    final = voice.overlay(music)
+    final.export(output_file, format="mp3")
+
+# --- APP LAYOUT ---
+selected = option_menu(
+    menu_title=None,
+    options=["Pocket Studio", "Settings"],
+    icons=["mic", "gear"],
+    default_index=0,
+    orientation="horizontal",
+)
+
+if selected == "Pocket Studio":
+    st.title("🎙️ Pocket FM Style Creator")
+    st.caption("Auto-Background Music + AI Voice")
+    
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        text_input = st.text_area("Yahan Kahani Likhein (Hindi/English):", height=300, 
+                                placeholder="Ek andheri raat thi... (Suspense music khud bajega)")
+        
+    with col2:
+        st.subheader("⚙️ Voice Settings")
+        
+        # Indian Voices
+        voices = {
+            "🇮🇳 Hindi Male (Madhur)": "hi-IN-MadhurNeural",
+            "🇮🇳 Hindi Female (Swara)": "hi-IN-SwaraNeural",
+            "🇮🇳 English Male (Prabhat)": "en-IN-PrabhatNeural",
+            "🇮🇳 English Female (Neerja)": "en-IN-NeerjaNeural"
+        }
+        selected_voice = st.selectbox("Narrator:", list(voices.keys()))
+        
+        # Auto Mode Toggle
+        auto_mode = st.checkbox("🤖 Auto-Detect Background Music", value=True)
+        
+        manual_mood = "Chill"
+        if not auto_mode:
+            manual_mood = st.selectbox("Manual Music:", list(MOOD_MUSIC.keys()))
+
+    if st.button("✨ Create Magic Audio"):
+        if not text_input:
+            st.error("Kuch likho toh sahi!")
+        else:
+            progress = st.progress(0)
+            status = st.empty()
+            
+            try:
+                # 1. Voice Generate
+                status.text("🗣️ Voice Generate ho rahi hai...")
+                voice_code = voices[selected_voice]
+                asyncio.run(generate_tts(text_input, voice_code, "voice.mp3"))
+                progress.progress(40)
+                
+                # 2. Music Decision
+                mood = manual_mood
+                if auto_mode:
+                    status.text("🧠 AI Scene samajh raha hai...")
+                    mood = analyze_sentiment(text_input)
+                    st.info(f"Detected Mood: **{mood}**")
+                
+                # 3. Download & Mix
+                status.text(f"🎵 {mood} Music add ho raha hai...")
+                music_url = MOOD_MUSIC[mood]
+                download_music(music_url, "bg_music.mp3")
+                
+                mix_audio("voice.mp3", "bg_music.mp3", "final_story.mp3")
+                progress.progress(100)
+                status.success("✅ Audio Ready!")
+                
+                # 4. Play & Download
+                st.audio("final_story.mp3")
+                with open("final_story.mp3", "rb") as f:
+                    st.download_button("⬇️ Download MP3", f, file_name="My_Story.mp3")
+                    
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+elif selected == "Settings":
+    st.title("🛠️ App Settings")
+    st.write("Yahan aap apni API keys ya custom music links set kar payenge (Future Update).")
     return " ".join(text)
 
 def extract_text_from_docx(docx_path):
