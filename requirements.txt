@@ -12,3 +12,4 @@ validators
 ffmpeg-python
 textblob
 requests
+Pillow
