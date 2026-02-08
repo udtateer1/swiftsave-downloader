@@ -10,3 +10,5 @@ PyPDF2
 cryptography
 validators
 ffmpeg-python
+textblob
+requests
