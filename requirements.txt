@@ -12,4 +12,3 @@ validators
 ffmpeg-python
 textblob
 requests
-pyaudioop
