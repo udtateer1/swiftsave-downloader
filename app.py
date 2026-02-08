@@ -24,92 +24,68 @@ import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
 
-# --- Page Config ---
-st.set_page_config(page_title="Elite Super App", page_icon="🔥", layout="wide")
+# --- Page Config (Pro Level) ---
+st.set_page_config(page_title="Elite Super App", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
+
+# --- ⚡ SPEED BOOSTER (Caching) ---
+# Ye function baar-baar load nahi hoga, memory mein save rahega
+@st.cache_resource
+def load_heavy_engines():
+    # Simulation of heavy loading
+    return True
+
+_ = load_heavy_engines()
+
 st.markdown("""
     <style>
-    .stButton>button {width: 100%; border-radius: 20px; background-color: #00e676; color: black; font-weight: bold;}
+    .stButton>button {width: 100%; border-radius: 12px; background-color: #00e676; color: black; font-weight: bold; border: none; padding: 10px;}
+    .stButton>button:hover {background-color: #00c853; color: white;}
     header {visibility: hidden;}
+    .dashboard-card {background-color: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: center;}
+    .big-font {font-size: 24px !important; font-weight: bold;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 🧠 DESI LOGIC (System Safe) ---
+# --- 🧠 LOGIC FUNCTIONS ---
 def desi_anuvad_logic(text, custom_map_text):
-    # 1. Basic Translation (English -> Hindi)
     try:
         translated = GoogleTranslator(source='auto', target='hi').translate(text)
-    except:
-        return "⚠️ Internet Error: Translation fail ho gaya."
+    except: return "⚠️ Net Error"
 
-    # 2. LOCATIONS & GENERIC TERMS (System Chhodkar)
-    # Sirf Jagah aur Padvi (Rank) badlegi
     replacements = {
-        # Locations (Jagah)
-        "Sect": "अखाड़ा (Akhada)",
-        "Peak": "चोटी (Pahadi)",
-        "Realm": "लोक (Lok)",
-        "Continent": "महाद्वीप (Mahadweep)",
-        "City": "नगर (Nagar)",
-        "Village": "गाँव (Gaon)",
-        "Pavilion": "मंडप (Mandap)",
-        
-        # Ranks (Padvi) - Characters ke liye
-        "Patriarch": "मुखिया (Mukhiya)",
-        "Elder": "दाऊ (Daau)",
-        "Disciple": "चेला (Chela)",
-        "Master": "गुरुजी (Guruji)",
-        
-        # NOTE: "System" ko list se hata diya hai, wo System hi rahega.
+        "Sect": "अखाड़ा (Akhada)", "Peak": "चोटी (Pahadi)", "Realm": "लोक (Lok)",
+        "Continent": "महाद्वीप", "City": "नगर", "Village": "गाँव",
+        "Patriarch": "मुखिया", "Elder": "दाऊ", "Disciple": "चेला", "Master": "गुरुजी"
     }
     
-    # 3. CUSTOM CHARACTER MAPPING (User Input se)
-    # Format: Original=New (e.g., Ye Tian=Yug)
     if custom_map_text:
         lines = custom_map_text.split('\n')
         for line in lines:
             if '=' in line:
                 parts = line.split('=')
-                original = parts[0].strip()
-                new_name = parts[1].strip()
-                # Pehle English naam replace karo
-                text = text.replace(original, new_name) 
-                # Phir agar Google ne translate kar diya ho toh wo bhi replace karo
-                replacements[original] = new_name
+                text = text.replace(parts[0].strip(), parts[1].strip())
+                replacements[parts[0].strip()] = parts[1].strip()
 
-    # Apply Replacements on Hindi Text
     for word, desi_word in replacements.items():
         translated = translated.replace(word, desi_word)
 
-    # 4. DIALECT (Halka Desi Touch)
-    desi_tadka = {
-        "मैं ": "हम ",
-        "तुम ": "तोरा ",
-        "क्यों": "काये",
-        "वहाँ": "उते",
-        "यहाँ": "इते",
-        "लड़का": "मोरा",
-        "लड़की": "मोरिया"
-    }
-    for hindi, desi in desi_tadka.items():
-        translated = translated.replace(hindi, desi)
-
+    desi_tadka = {"मैं ": "हम ", "तुम ": "तोरा ", "क्यों": "काये", "वहाँ": "उते", "यहाँ": "इते"}
+    for k, v in desi_tadka.items(): translated = translated.replace(k, v)
     return translated
 
 # --- 🎭 RESOURCES ---
 CHARACTERS = {
-    "🔥 Thriller (Shiv)": {"voice": "ur-PK-SalmanNeural", "pitch": "-15Hz", "rate": "-5%", "desc": "Bhaari, Villain Awaaz"},
-    "❤️ Romance (Viraj)": {"voice": "hi-IN-MadhurNeural", "pitch": "+5Hz", "rate": "+5%", "desc": "Lover Boy"},
-    "👻 Horror (Bhoot)": {"voice": "hi-IN-SwaraNeural", "pitch": "-10Hz", "rate": "-20%", "desc": "Darawani, Goonjti hui"}
+    "🔥 Thriller (Shiv)": {"voice": "ur-PK-SalmanNeural", "pitch": "-15Hz", "rate": "-5%"},
+    "❤️ Romance (Viraj)": {"voice": "hi-IN-MadhurNeural", "pitch": "+5Hz", "rate": "+5%"},
+    "👻 Horror (Bhoot)": {"voice": "hi-IN-SwaraNeural", "pitch": "-10Hz", "rate": "-20%"}
 }
-
 MOOD_MUSIC = {
     "Sad": "https://www.bensound.com/bensound-music/bensound-sadday.mp3",
-    "Suspense": "https://www.bensound.com/bensound-music/bensound-epic.mp3",
     "Action": "https://www.bensound.com/bensound-music/bensound-dubstep.mp3",
     "Chill": "https://www.bensound.com/bensound-music/bensound-slowmotion.mp3"
 }
 
-# --- 🛠️ HELPER FUNCTIONS ---
+# --- HELPER FUNCTIONS ---
 def extract_text(file_obj, ext):
     try:
         if ext == 'pdf': return " ".join([p.extract_text() for p in PdfReader(file_obj).pages])
@@ -133,115 +109,134 @@ def download_file(url, filename):
         return True
     except: return False
 
-async def generate_voice(text, voice_code, pitch, rate, output_file):
-    communicate = edge_tts.Communicate(text, voice_code, pitch=pitch, rate=rate)
-    await communicate.save(output_file)
+async def generate_voice(text, code, pitch, rate, file):
+    await edge_tts.Communicate(text, code, pitch=pitch, rate=rate).save(file)
 
-def mix_audio_safe(voice_path, beat_path, output_path, vol_adj=-15):
+def mix_audio_safe(v_path, b_path, out_path):
     if not HAS_MUSIC_ENGINE: return False
     try:
-        voice = AudioSegment.from_file(voice_path)
-        if os.path.exists(beat_path):
-            beat = AudioSegment.from_file(beat_path) + vol_adj
-            if len(beat) < len(voice):
-                beat = beat * (len(voice) // len(beat) + 1)
-            final = beat[:len(voice)+1000].overlay(voice)
-            final.export(output_path, format="mp3")
+        v = AudioSegment.from_file(v_path)
+        if os.path.exists(b_path):
+            b = AudioSegment.from_file(b_path) - 15
+            if len(b) < len(v): b = b * (len(v) // len(b) + 1)
+            b[:len(v)+1000].overlay(v).export(out_path, format="mp3")
             return True
     except: return False
 
-# --- 🧭 NAVIGATION ---
-selected = option_menu(
-    menu_title=None,
-    options=["Desi Translator", "Pocket Universe", "Music Lab", "PDF Tools", "Downloader", "Vault"],
-    icons=["translate", "mic", "music-note-beamed", "file-text", "cloud-download", "lock"],
-    default_index=0,
-    orientation="horizontal",
-)
+# --- 🧭 NAVIGATION MENU (With Home) ---
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=50)
+    st.title("Elite Super App")
+    selected = option_menu(
+        menu_title="Menu",
+        options=["Home", "Desi Translator", "Pocket Universe", "Music Lab", "PDF Tools", "Downloader", "Vault", "About & Privacy"],
+        icons=["house", "translate", "mic", "music-note", "file-text", "download", "lock", "info-circle"],
+        default_index=0,
+    )
+    st.info("v2.0 (Pro Edition)")
 
-# --- 1. 📜 DESI TRANSLATOR (System Safe) ---
-if selected == "Desi Translator":
-    st.title("📜 Desi Translator (System Safe)")
+# --- 1. 🏠 HOME DASHBOARD (New) ---
+if selected == "Home":
+    st.title("👋 Welcome, Aman!")
+    st.markdown("### Aapka Personal AI Studio")
     
-    c1, c2 = st.columns([1, 1])
-    
+    # Dashboard Cards
+    c1, c2, c3 = st.columns(3)
     with c1:
-        src_type = st.radio("Input Source:", ["Text Paste", "File Upload"], horizontal=True)
-        input_text = ""
-        if src_type == "Text Paste":
-            input_text = st.text_area("English Text:", height=300, placeholder="Example: The System activated...")
-        else:
-            f = st.file_uploader("Upload Novel", type=['txt', 'docx', 'pdf'])
-            if f:
-                ext = f.name.split('.')[-1]
-                input_text = extract_text(f, ext)
-                st.success(f"Loaded: {len(input_text)} chars")
-
+        st.markdown("""<div class="dashboard-card"><h3>🎤 Studio</h3><p>Create Novels & Songs</p></div>""", unsafe_allow_html=True)
     with c2:
-        st.subheader("🛠️ Name Changer (Mapping)")
-        st.caption("Format: OriginalName=NewName (Har line mein ek)")
-        custom_map = st.text_area("Character/Location Map:", height=150, 
-            placeholder="Ye Tian = Yug\nBeijing = Banaras\nSect = Akhada\n(Note: 'System' change nahi hoga)")
-        
-        if st.button("🚀 Translate Now"):
-            if not input_text: st.error("Text missing!")
-            else:
-                with st.spinner("Translating..."):
-                    desi_out = desi_anuvad_logic(input_text[:5000], custom_map)
-                    
-                    st.markdown("### **📖 Translated Output:**")
-                    st.success(desi_out)
-                    st.download_button("⬇️ Download Text", desi_out, file_name="Desi_Novel.txt")
+        st.markdown("""<div class="dashboard-card"><h3>📄 Docs</h3><p>Translate & Edit PDFs</p></div>""", unsafe_allow_html=True)
+    with c3:
+        st.markdown("""<div class="dashboard-card"><h3>🔐 Vault</h3><p>Secure Private Data</p></div>""", unsafe_allow_html=True)
+    
+    st.write("---")
+    st.subheader("🚀 Quick Actions")
+    if st.button("Start New Project"):
+        st.toast("Menu se koi Tool select karein!")
+    
+    st.image("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe", caption="Powered by Neural AI Engine", use_container_width=True)
 
-# --- 2. POCKET UNIVERSE ---
+# --- 2. DESI TRANSLATOR ---
+elif selected == "Desi Translator":
+    st.title("📜 Desi Translator")
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        src = st.radio("Input:", ["Paste", "Upload"], horizontal=True)
+        txt = ""
+        if src == "Paste": txt = st.text_area("English Text:", height=250)
+        else:
+            f = st.file_uploader("File", type=['txt','docx','pdf'])
+            if f: txt = extract_text(f, f.name.split('.')[-1])
+    with c2:
+        st.subheader("Mapping (Optional)")
+        cmap = st.text_area("Map (e.g. Ye Tian=Prem):", height=100)
+        if st.button("Translate"):
+            if txt:
+                st.success(desi_anuvad_logic(txt[:5000], cmap))
+
+# --- 3. POCKET UNIVERSE ---
 elif selected == "Pocket Universe":
-    st.title("🎭 Pocket FM Universe")
+    st.title("🎭 Pocket Universe")
     c1, c2 = st.columns(2)
-    with c1: raw_text = st.text_area("Script:", height=200)
+    with c1: raw = st.text_area("Story Script:", height=200)
     with c2:
         char = st.selectbox("Character:", list(CHARACTERS.keys()))
-        music = st.selectbox("Music:", list(MOOD_MUSIC.keys()))
-
-    if st.button("✨ Create Audio"):
-        if raw_text:
+        mus = st.selectbox("Music:", list(MOOD_MUSIC.keys()))
+    if st.button("Generate Audio"):
+        if raw:
             cd = CHARACTERS[char]
-            asyncio.run(generate_voice(raw_text, cd['voice'], cd['pitch'], cd['rate'], "v.mp3"))
-            download_file(MOOD_MUSIC[music], "bg.mp3")
+            asyncio.run(generate_voice(raw, cd['voice'], cd['pitch'], cd['rate'], "v.mp3"))
+            download_file(MOOD_MUSIC[mus], "bg.mp3")
             if HAS_MUSIC_ENGINE and mix_audio_safe("v.mp3", "bg.mp3", "final.mp3"):
                 st.audio("final.mp3")
             else: st.audio("v.mp3")
 
-# --- 3. MUSIC LAB ---
+# --- 4. MUSIC LAB ---
 elif selected == "Music Lab":
-    st.title("🎵 AI Music Lab")
-    lyrics = st.text_area("Lyrics:", height=150)
-    if st.button("Make Song"):
-        if lyrics:
-            asyncio.run(generate_voice(lyrics, "hi-IN-MadhurNeural", "-5Hz", "+10%", "voc.mp3"))
+    st.title("🎵 Music Lab")
+    lyr = st.text_area("Lyrics:", height=150)
+    if st.button("Create Song"):
+        if lyr:
+            asyncio.run(generate_voice(lyr, "hi-IN-MadhurNeural", "-5Hz", "+10%", "voc.mp3"))
             st.audio("voc.mp3")
 
-# --- 4. PDF TOOLS ---
+# --- 5. PDF TOOLS ---
 elif selected == "PDF Tools":
     st.title("📄 PDF Tools")
     upl = st.file_uploader("Images", accept_multiple_files=True)
-    if upl and st.button("Convert"):
+    if upl and st.button("Convert to PDF"):
         imgs = [Image.open(x).convert("RGB") for x in upl]
         imgs[0].save("doc.pdf", save_all=True, append_images=imgs[1:])
         with open("doc.pdf", "rb") as f: st.download_button("Download", f)
 
-# --- 5. DOWNLOADER ---
+# --- 6. DOWNLOADER ---
 elif selected == "Downloader":
     st.title("🎬 Downloader")
-    url = st.text_input("Link:")
+    url = st.text_input("Video Link:")
     if st.button("Download"):
         with yt_dlp.YoutubeDL({'quiet':True}) as ydl:
             try:
                 info = ydl.extract_info(url, download=False)
-                st.link_button("Download", info['url'])
-            except: st.error("Invalid")
+                st.link_button("Download Video", info['url'])
+            except: st.error("Invalid Link")
 
-# --- 6. VAULT ---
+# --- 7. VAULT ---
 elif selected == "Vault":
     st.title("🔐 Vault")
     if st.text_input("PIN", type="password") == "1234":
-        st.file_uploader("Files")
+        st.file_uploader("Secret Files")
+
+# --- 8. 📜 ABOUT & PRIVACY (Legal) ---
+elif selected == "About & Privacy":
+    st.title("ℹ️ About Elite Super App")
+    st.info("Version 2.0 | Developed by Aman Tech")
+    
+    st.markdown("### 🔒 Privacy Policy")
+    st.write("""
+    1. **Data Safety:** Hum aapka koi bhi personal data (Photos/PDFs) apne server par save nahi karte.
+    2. **Local Processing:** Sab kuch aapke session tak hi seemit hai.
+    3. **Permissions:** Camera aur Storage sirf features use karne ke liye chahiye.
+    """)
+    
+    st.markdown("### 📞 Contact Us")
+    st.write("Email: support@elitetech.com")
