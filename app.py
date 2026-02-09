@@ -24,9 +24,8 @@ import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
 
-# --- Page Config ---
-# Sidebar state "collapsed" rakha hai taaki arrow (>) dikhe
-st.set_page_config(page_title="Elite Super App", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
+# --- Page Config (Sidebar Expanded rakha hai taaki menu dikhe) ---
+st.set_page_config(page_title="Elite Super App", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
 
 # --- SESSION STATE ---
 if 'current_tab' not in st.session_state:
@@ -36,52 +35,56 @@ def navigate_to(tab_name):
     st.session_state.current_tab = tab_name
     st.rerun()
 
-# --- 🎨 CUSTOM CSS (THE FINAL MENU FIX) ---
+# --- 🎨 CUSTOM CSS (Menu Fix) ---
 st.markdown("""
     <style>
-    /* 1. Scroll Control */
+    /* 1. Basic Reset */
     html, body {
-        overscroll-behavior-y: none !important;
-        overflow-y: auto !important;
+        overscroll-behavior-y: none; /* Refresh rokne ke liye */
     }
     
-    /* 2. HEADER VISIBILITY (Isse dhyan se dekhein) */
+    /* 2. HEADER VISIBILITY - Isse dhyan se dekhein */
     
-    /* Header Container ko visible rakho */
+    /* Header ko 'Transparent' rakho par 'Visible' rakho */
     header[data-testid="stHeader"] {
-        display: block !important;
-        background-color: transparent !important;
-        height: auto !important;
-        z-index: 100000 !important; /* Sabse upar */
+        background: transparent !important;
+        z-index: 100 !important;
     }
 
-    /* Sidebar Toggle Button (Arrow >) ko JABARDASTI dikhao */
-    [data-testid="stSidebarCollapsedControl"] {
-        display: block !important;
-        visibility: visible !important;
-        color: white !important; /* Rang safed taaki dikhe */
-        background-color: rgba(0,0,0,0.5) !important; /* Halka background taaki glow kare */
-        border-radius: 5px !important;
-    }
-
-    /* RIGHT SIDE Toolbar (Settings/GitHub) ko GAYAB karo */
-    [data-testid="stToolbar"], [data-testid="stHeaderActionElements"] {
+    /* RIGHT SIDE ke tools (Deploy, GitHub, Settings) ko chhupao */
+    [data-testid="stToolbar"], 
+    [data-testid="stHeaderActionElements"], 
+    .stAppDeployButton {
+        visibility: hidden !important;
         display: none !important;
+        height: 0px !important;
+    }
+
+    /* MENU BUTTON (Arrow) ko highlight karo */
+    [data-testid="stSidebarCollapsedControl"] {
+        visibility: visible !important;
+        display: block !important;
+        color: white !important;
+        background-color: #1e1e1e !important; /* Button ke peeche dark background */
+        border-radius: 8px !important;
+        padding: 4px !important;
+        margin-top: 10px !important;
+        margin-left: 10px !important;
+        z-index: 99999 !important;
+    }
+
+    /* 3. Top Line Decoration Hatao */
+    [data-testid="stDecoration"] {
         visibility: hidden !important;
     }
 
-    /* Top ki colored decoration line hatao */
-    [data-testid="stDecoration"] {
-        display: none !important;
-    }
-
-    /* 3. Mobile Padding (Taaki content button ke peeche na chupe) */
+    /* 4. Content Spacing (Taaki content button ke upar na chadh jaye) */
     .block-container {
         padding-top: 4rem !important; 
         padding-bottom: 5rem !important;
     }
 
-    /* 4. Buttons Design */
+    /* 5. Buttons Design */
     .stButton>button {
         width: 100%; border-radius: 12px; 
         background-color: #00e676; color: black; 
@@ -89,12 +92,11 @@ st.markdown("""
         box-shadow: 0px 4px 6px rgba(0,0,0,0.2);
     }
     
-    /* 5. Card Hover Effect */
+    /* 6. Card Design */
     .dashboard-card {
         background-color: #1e1e1e; padding: 15px; 
         border-radius: 15px; border: 1px solid #333; 
         text-align: center; margin-bottom: 10px;
-        transition: transform 0.2s;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -188,6 +190,7 @@ if st.session_state.current_tab == "Home":
     st.title("👋 Welcome, Aman!")
     st.caption("Aapka Personal AI Studio")
     
+    # Direct Navigation Buttons (Agar sidebar kaam na kare toh ye backup hai)
     c1, c2 = st.columns(2)
     with c1:
         st.markdown("""<div class="dashboard-card"><h3>🎤 Studio</h3><p>Story & Audio</p></div>""", unsafe_allow_html=True)
@@ -205,7 +208,7 @@ if st.session_state.current_tab == "Home":
         if st.button("Open Vault", key="btn_vault"): navigate_to("Vault")
 
     st.write("---")
-    st.caption("👈 Use the arrow button (Top-Left) for full menu.")
+    st.caption("👈 Sidebar Menu should be open now.")
 
 # --- 2. TRANSLATOR ---
 elif st.session_state.current_tab == "Desi Translator":
@@ -220,3 +223,63 @@ elif st.session_state.current_tab == "Desi Translator":
             if f: txt = extract_text(f, f.name.split('.')[-1])
     with c2:
         cmap = st.text_area("Name Mapping (e.g. Ye=Prem):", height=100)
+        if st.button("Translate"):
+            if txt: st.success(desi_anuvad_logic(txt[:5000], cmap))
+    if st.button("⬅️ Back to Home"): navigate_to("Home")
+
+# --- 3. POCKET UNIVERSE ---
+elif st.session_state.current_tab == "Pocket Universe":
+    st.title("🎭 Pocket Universe")
+    c1, c2 = st.columns(2)
+    with c1: raw = st.text_area("Story Script:", height=200)
+    with c2:
+        char = st.selectbox("Character:", list(CHARACTERS.keys()))
+        mus = st.selectbox("Music:", list(MOOD_MUSIC.keys()))
+    if st.button("Generate Audio"):
+        if raw:
+            cd = CHARACTERS[char]
+            asyncio.run(generate_voice(raw, cd['voice'], cd['pitch'], cd['rate'], "v.mp3"))
+            download_file(MOOD_MUSIC[mus], "bg.mp3")
+            if HAS_MUSIC_ENGINE and mix_audio_safe("v.mp3", "bg.mp3", "final.mp3"):
+                st.audio("final.mp3")
+            else: st.audio("v.mp3")
+    if st.button("⬅️ Back to Home"): navigate_to("Home")
+
+# --- 4. MUSIC LAB ---
+elif st.session_state.current_tab == "Music Lab":
+    st.title("🎵 Music Lab")
+    lyr = st.text_area("Lyrics:", height=150)
+    if st.button("Create Song"):
+        if lyr:
+            asyncio.run(generate_voice(lyr, "hi-IN-MadhurNeural", "-5Hz", "+10%", "voc.mp3"))
+            st.audio("voc.mp3")
+    if st.button("⬅️ Back to Home"): navigate_to("Home")
+
+# --- 5. PDF TOOLS ---
+elif st.session_state.current_tab == "PDF Tools":
+    st.title("📄 PDF Tools")
+    upl = st.file_uploader("Images", accept_multiple_files=True)
+    if upl and st.button("Convert to PDF"):
+        imgs = [Image.open(x).convert("RGB") for x in upl]
+        imgs[0].save("doc.pdf", save_all=True, append_images=imgs[1:])
+        with open("doc.pdf", "rb") as f: st.download_button("Download", f)
+    if st.button("⬅️ Back to Home"): navigate_to("Home")
+
+# --- 6. DOWNLOADER ---
+elif st.session_state.current_tab == "Downloader":
+    st.title("🎬 Downloader")
+    url = st.text_input("Video Link:")
+    if st.button("Download"):
+        with yt_dlp.YoutubeDL({'quiet':True}) as ydl:
+            try:
+                info = ydl.extract_info(url, download=False)
+                st.link_button("Download Video", info['url'])
+            except: st.error("Invalid Link")
+    if st.button("⬅️ Back to Home"): navigate_to("Home")
+
+# --- 7. VAULT ---
+elif st.session_state.current_tab == "Vault":
+    st.title("🔐 Vault")
+    if st.text_input("PIN", type="password") == "1234":
+        st.file_uploader("Secret Files")
+    if st.button("⬅️ Back to Home"): navigate_to("Home")
