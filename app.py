@@ -25,9 +25,10 @@ from ebooklib import epub
 from bs4 import BeautifulSoup
 
 # --- Page Config ---
+# Sidebar state "collapsed" rakha hai taaki arrow (>) dikhe
 st.set_page_config(page_title="Elite Super App", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
 
-# --- SESSION STATE (Navigation Logic) ---
+# --- SESSION STATE ---
 if 'current_tab' not in st.session_state:
     st.session_state.current_tab = "Home"
 
@@ -35,7 +36,7 @@ def navigate_to(tab_name):
     st.session_state.current_tab = tab_name
     st.rerun()
 
-# --- 🎨 CUSTOM CSS (Menu ON, Code Option OFF) ---
+# --- 🎨 CUSTOM CSS (THE FINAL MENU FIX) ---
 st.markdown("""
     <style>
     /* 1. Scroll Control */
@@ -44,27 +45,39 @@ st.markdown("""
         overflow-y: auto !important;
     }
     
-    /* 2. HEADER MAGIC (Sabse Zaroori) */
-    /* Header ko dikhao (Sidebar button ke liye) */
+    /* 2. HEADER VISIBILITY (Isse dhyan se dekhein) */
+    
+    /* Header Container ko visible rakho */
     header[data-testid="stHeader"] {
+        display: block !important;
         background-color: transparent !important;
+        height: auto !important;
+        z-index: 100000 !important; /* Sabse upar */
     }
 
-    /* SIRF Right Side wala Toolbar (Manage App, Github, Settings) GAYAB karo */
-    [data-testid="stToolbar"] {
+    /* Sidebar Toggle Button (Arrow >) ko JABARDASTI dikhao */
+    [data-testid="stSidebarCollapsedControl"] {
+        display: block !important;
+        visibility: visible !important;
+        color: white !important; /* Rang safed taaki dikhe */
+        background-color: rgba(0,0,0,0.5) !important; /* Halka background taaki glow kare */
+        border-radius: 5px !important;
+    }
+
+    /* RIGHT SIDE Toolbar (Settings/GitHub) ko GAYAB karo */
+    [data-testid="stToolbar"], [data-testid="stHeaderActionElements"] {
         display: none !important;
         visibility: hidden !important;
-        height: 0px !important;
     }
 
-    /* Top ki colored line bhi hatao */
+    /* Top ki colored decoration line hatao */
     [data-testid="stDecoration"] {
         display: none !important;
     }
 
-    /* 3. Mobile Optimization */
+    /* 3. Mobile Padding (Taaki content button ke peeche na chupe) */
     .block-container {
-        padding-top: 3rem !important; /* Button ke liye jagah */
+        padding-top: 4rem !important; 
         padding-bottom: 5rem !important;
     }
 
@@ -82,10 +95,6 @@ st.markdown("""
         border-radius: 15px; border: 1px solid #333; 
         text-align: center; margin-bottom: 10px;
         transition: transform 0.2s;
-    }
-    .dashboard-card:hover {
-        transform: scale(1.02);
-        border-color: #00e676;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -196,7 +205,7 @@ if st.session_state.current_tab == "Home":
         if st.button("Open Vault", key="btn_vault"): navigate_to("Vault")
 
     st.write("---")
-    st.caption("Tip: Use the arrow (>) at the top-left to open the full menu.")
+    st.caption("👈 Use the arrow button (Top-Left) for full menu.")
 
 # --- 2. TRANSLATOR ---
 elif st.session_state.current_tab == "Desi Translator":
@@ -211,15 +220,3 @@ elif st.session_state.current_tab == "Desi Translator":
             if f: txt = extract_text(f, f.name.split('.')[-1])
     with c2:
         cmap = st.text_area("Name Mapping (e.g. Ye=Prem):", height=100)
-        if st.button("Translate"):
-            if txt: st.success(desi_anuvad_logic(txt[:5000], cmap))
-    if st.button("⬅️ Back to Home"): navigate_to("Home")
-
-# --- 3. POCKET UNIVERSE ---
-elif st.session_state.current_tab == "Pocket Universe":
-    st.title("🎭 Pocket Universe")
-    c1, c2 = st.columns(2)
-    with c1: raw = st.text_area("Story Script:", height=200)
-    with c2:
-        char = st.selectbox("Character:", list(CHARACTERS.keys()))
-        mus = st.selectbox("Music:", list(MOOD_MUSIC.keys()))
