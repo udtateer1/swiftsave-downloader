@@ -27,8 +27,7 @@ from bs4 import BeautifulSoup
 # --- Page Config ---
 st.set_page_config(page_title="Elite Super App", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 🧠 SESSION STATE NAVIGATION (Dil-Dimaag of App) ---
-# Ye magic code hai jo yaad rakhega ki user abhi kahan hai
+# --- SESSION STATE (Navigation Logic) ---
 if 'current_tab' not in st.session_state:
     st.session_state.current_tab = "Home"
 
@@ -36,29 +35,40 @@ def navigate_to(tab_name):
     st.session_state.current_tab = tab_name
     st.rerun()
 
-# --- CUSTOM CSS (Menu Button Wapas + Scroll Fix) ---
+# --- 🎨 CUSTOM CSS (Menu ON, Code Option OFF) ---
 st.markdown("""
     <style>
-    /* 1. Scroll Control (Refresh Roko, lekin Scroll chalu rakho) */
+    /* 1. Scroll Control */
     html, body {
         overscroll-behavior-y: none !important;
         overflow-y: auto !important;
     }
     
-    /* 2. HEADER FIX: Menu Button Wapas Lao! */
+    /* 2. HEADER MAGIC (Sabse Zaroori) */
+    /* Header ko dikhao (Sidebar button ke liye) */
     header[data-testid="stHeader"] {
-        display: block !important; /* Ye button ko wapas layega */
         background-color: transparent !important;
-        z-index: 9999;
     }
-    
-    /* 3. Mobile View Optimization */
+
+    /* SIRF Right Side wala Toolbar (Manage App, Github, Settings) GAYAB karo */
+    [data-testid="stToolbar"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+    }
+
+    /* Top ki colored line bhi hatao */
+    [data-testid="stDecoration"] {
+        display: none !important;
+    }
+
+    /* 3. Mobile Optimization */
     .block-container {
-        padding-top: 3rem !important; /* Thodi jagah upar taaki button dikhe */
+        padding-top: 3rem !important; /* Button ke liye jagah */
         padding-bottom: 5rem !important;
     }
 
-    /* 4. Buttons & Cards Design */
+    /* 4. Buttons Design */
     .stButton>button {
         width: 100%; border-radius: 12px; 
         background-color: #00e676; color: black; 
@@ -66,7 +76,7 @@ st.markdown("""
         box-shadow: 0px 4px 6px rgba(0,0,0,0.2);
     }
     
-    /* Card Hover Effect */
+    /* 5. Card Hover Effect */
     .dashboard-card {
         background-color: #1e1e1e; padding: 15px; 
         border-radius: 15px; border: 1px solid #333; 
@@ -80,7 +90,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 🎭 RESOURCES (Data) ---
+# --- RESOURCES ---
 CHARACTERS = {
     "🔥 Thriller (Shiv)": {"voice": "ur-PK-SalmanNeural", "pitch": "-15Hz", "rate": "-5%"},
     "❤️ Romance (Viraj)": {"voice": "hi-IN-MadhurNeural", "pitch": "+5Hz", "rate": "+5%"},
@@ -143,12 +153,11 @@ def desi_anuvad_logic(text, custom_map_text):
     for w, d in replacements.items(): translated = translated.replace(w, d)
     return translated
 
-# --- 🧭 SIDEBAR NAVIGATION (Sync with Home Buttons) ---
+# --- 🧭 SIDEBAR NAVIGATION ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=50)
     st.title("Elite Super App")
     
-    # Ye menu ab session state se control hoga
     selected = option_menu(
         menu_title="Main Menu",
         options=["Home", "Desi Translator", "Pocket Universe", "Music Lab", "PDF Tools", "Downloader", "Vault"],
@@ -161,40 +170,35 @@ with st.sidebar:
                       5 if st.session_state.current_tab == "Downloader" else 6,
     )
     
-    # Agar sidebar se change kiya, to state update karo
     if selected != st.session_state.current_tab:
         st.session_state.current_tab = selected
         st.rerun()
 
-# --- 1. 🏠 HOME DASHBOARD (Active Buttons) ---
+# --- 1. 🏠 HOME ---
 if st.session_state.current_tab == "Home":
     st.title("👋 Welcome, Aman!")
     st.caption("Aapka Personal AI Studio")
     
-    # Row 1
     c1, c2 = st.columns(2)
     with c1:
         st.markdown("""<div class="dashboard-card"><h3>🎤 Studio</h3><p>Story & Audio</p></div>""", unsafe_allow_html=True)
         if st.button("Open Studio", key="btn_studio"): navigate_to("Pocket Universe")
-        
     with c2:
         st.markdown("""<div class="dashboard-card"><h3>📜 Translator</h3><p>Desi Anuvad</p></div>""", unsafe_allow_html=True)
         if st.button("Open Translator", key="btn_trans"): navigate_to("Desi Translator")
     
-    # Row 2
     c3, c4 = st.columns(2)
     with c3:
         st.markdown("""<div class="dashboard-card"><h3>🎵 Music</h3><p>Create Songs</p></div>""", unsafe_allow_html=True)
         if st.button("Open Music Lab", key="btn_music"): navigate_to("Music Lab")
-        
     with c4:
         st.markdown("""<div class="dashboard-card"><h3>🔐 Vault</h3><p>Secure Files</p></div>""", unsafe_allow_html=True)
         if st.button("Open Vault", key="btn_vault"): navigate_to("Vault")
 
     st.write("---")
-    st.caption("Tip: Upar left corner mein Arrow (>) dabakar full menu dekhein.")
+    st.caption("Tip: Use the arrow (>) at the top-left to open the full menu.")
 
-# --- 2. DESI TRANSLATOR ---
+# --- 2. TRANSLATOR ---
 elif st.session_state.current_tab == "Desi Translator":
     st.title("📜 Desi Translator")
     c1, c2 = st.columns([1, 1])
@@ -205,3 +209,17 @@ elif st.session_state.current_tab == "Desi Translator":
         else:
             f = st.file_uploader("File", type=['txt','docx','pdf'])
             if f: txt = extract_text(f, f.name.split('.')[-1])
+    with c2:
+        cmap = st.text_area("Name Mapping (e.g. Ye=Prem):", height=100)
+        if st.button("Translate"):
+            if txt: st.success(desi_anuvad_logic(txt[:5000], cmap))
+    if st.button("⬅️ Back to Home"): navigate_to("Home")
+
+# --- 3. POCKET UNIVERSE ---
+elif st.session_state.current_tab == "Pocket Universe":
+    st.title("🎭 Pocket Universe")
+    c1, c2 = st.columns(2)
+    with c1: raw = st.text_area("Story Script:", height=200)
+    with c2:
+        char = st.selectbox("Character:", list(CHARACTERS.keys()))
+        mus = st.selectbox("Music:", list(MOOD_MUSIC.keys()))
