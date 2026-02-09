@@ -24,96 +24,63 @@ import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
 
-# --- Page Config (Pro Level) ---
-st.set_page_config(page_title="Elite Super App", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
+# --- Page Config ---
+st.set_page_config(page_title="Elite Super App", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
 
-# --- ⚡ SPEED BOOSTER (Caching) ---
-# Ye function baar-baar load nahi hoga, memory mein save rahega
-@st.cache_resource
-def load_heavy_engines():
-    # Simulation of heavy loading
-    return True
+# --- 🧠 SESSION STATE NAVIGATION (Dil-Dimaag of App) ---
+# Ye magic code hai jo yaad rakhega ki user abhi kahan hai
+if 'current_tab' not in st.session_state:
+    st.session_state.current_tab = "Home"
 
-_ = load_heavy_engines()
+def navigate_to(tab_name):
+    st.session_state.current_tab = tab_name
+    st.rerun()
 
-# --- CUSTOM CSS (Smooth Scroll + No Refresh) ---
+# --- CUSTOM CSS (Menu Button Wapas + Scroll Fix) ---
 st.markdown("""
     <style>
-    /* 1. Reset: Pehle sab kuch normal karo */
-    * {
-        box-sizing: border-box;
-    }
-
-    /* 2. Main Fix: Scrolling chalu, lekin "Khinchawat" (Refresh) band */
+    /* 1. Scroll Control (Refresh Roko, lekin Scroll chalu rakho) */
     html, body {
-        overscroll-behavior: none !important; /* Ye magic line hai jo refresh rokti hai */
-        overflow-y: auto !important; /* Ye scrolling ko wapas smooth banati hai */
-        height: 100%;
+        overscroll-behavior-y: none !important;
+        overflow-y: auto !important;
     }
-
-    /* 3. App Container ko bhi control karo */
-    .stApp {
-        overscroll-behavior: none !important;
-        background-color: #0e1117; /* Dark background fix */
+    
+    /* 2. HEADER FIX: Menu Button Wapas Lao! */
+    header[data-testid="stHeader"] {
+        display: block !important; /* Ye button ko wapas layega */
+        background-color: transparent !important;
+        z-index: 9999;
     }
-
-    /* 4. Header Gayab (Taaki upar galti se click na ho) */
-    header, [data-testid="stHeader"] {
-        display: none !important;
-        height: 0px !important;
-    }
-
-    /* 5. Mobile View Optimization */
+    
+    /* 3. Mobile View Optimization */
     .block-container {
-        padding-top: 0rem !important;
+        padding-top: 3rem !important; /* Thodi jagah upar taaki button dikhe */
         padding-bottom: 5rem !important;
-        max-width: 100% !important;
     }
 
-    /* 6. Buttons & Cards Design (Same as before) */
+    /* 4. Buttons & Cards Design */
     .stButton>button {
         width: 100%; border-radius: 12px; 
         background-color: #00e676; color: black; 
         font-weight: bold; border: none; padding: 12px;
-        box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+        box-shadow: 0px 4px 6px rgba(0,0,0,0.2);
     }
     
+    /* Card Hover Effect */
     .dashboard-card {
         background-color: #1e1e1e; padding: 15px; 
         border-radius: 15px; border: 1px solid #333; 
         text-align: center; margin-bottom: 10px;
+        transition: transform 0.2s;
+    }
+    .dashboard-card:hover {
+        transform: scale(1.02);
+        border-color: #00e676;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 🧠 LOGIC FUNCTIONS ---
-def desi_anuvad_logic(text, custom_map_text):
-    try:
-        translated = GoogleTranslator(source='auto', target='hi').translate(text)
-    except: return "⚠️ Net Error"
-
-    replacements = {
-        "Sect": "अखाड़ा (Akhada)", "Peak": "चोटी (Pahadi)", "Realm": "लोक (Lok)",
-        "Continent": "महाद्वीप", "City": "नगर", "Village": "गाँव",
-        "Patriarch": "मुखिया", "Elder": "दाऊ", "Disciple": "चेला", "Master": "गुरुजी"
-    }
-    
-    if custom_map_text:
-        lines = custom_map_text.split('\n')
-        for line in lines:
-            if '=' in line:
-                parts = line.split('=')
-                text = text.replace(parts[0].strip(), parts[1].strip())
-                replacements[parts[0].strip()] = parts[1].strip()
-
-    for word, desi_word in replacements.items():
-        translated = translated.replace(word, desi_word)
-
-    desi_tadka = {"मैं ": "हम ", "तुम ": "तोरा ", "क्यों": "काये", "वहाँ": "उते", "यहाँ": "इते"}
-    for k, v in desi_tadka.items(): translated = translated.replace(k, v)
-    return translated
-
-# --- 🎭 RESOURCES ---
+# --- 🎭 RESOURCES (Data) ---
 CHARACTERS = {
     "🔥 Thriller (Shiv)": {"voice": "ur-PK-SalmanNeural", "pitch": "-15Hz", "rate": "-5%"},
     "❤️ Romance (Viraj)": {"voice": "hi-IN-MadhurNeural", "pitch": "+5Hz", "rate": "+5%"},
@@ -163,41 +130,72 @@ def mix_audio_safe(v_path, b_path, out_path):
             return True
     except: return False
 
-# --- 🧭 NAVIGATION MENU (With Home) ---
+def desi_anuvad_logic(text, custom_map_text):
+    try: translated = GoogleTranslator(source='auto', target='hi').translate(text)
+    except: return "⚠️ Net Error"
+    replacements = {"Sect": "अखाड़ा", "Peak": "चोटी", "Realm": "लोक", "City": "नगर"}
+    if custom_map_text:
+        for line in custom_map_text.split('\n'):
+            if '=' in line:
+                p = line.split('=')
+                text = text.replace(p[0].strip(), p[1].strip())
+                replacements[p[0].strip()] = p[1].strip()
+    for w, d in replacements.items(): translated = translated.replace(w, d)
+    return translated
+
+# --- 🧭 SIDEBAR NAVIGATION (Sync with Home Buttons) ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=50)
     st.title("Elite Super App")
+    
+    # Ye menu ab session state se control hoga
     selected = option_menu(
-        menu_title="Menu",
-        options=["Home", "Desi Translator", "Pocket Universe", "Music Lab", "PDF Tools", "Downloader", "Vault", "About & Privacy"],
-        icons=["house", "translate", "mic", "music-note", "file-text", "download", "lock", "info-circle"],
-        default_index=0,
+        menu_title="Main Menu",
+        options=["Home", "Desi Translator", "Pocket Universe", "Music Lab", "PDF Tools", "Downloader", "Vault"],
+        icons=["house", "translate", "mic", "music-note", "file-text", "download", "lock"],
+        default_index=0 if st.session_state.current_tab == "Home" else \
+                      1 if st.session_state.current_tab == "Desi Translator" else \
+                      2 if st.session_state.current_tab == "Pocket Universe" else \
+                      3 if st.session_state.current_tab == "Music Lab" else \
+                      4 if st.session_state.current_tab == "PDF Tools" else \
+                      5 if st.session_state.current_tab == "Downloader" else 6,
     )
-    st.info("v2.0 (Pro Edition)")
+    
+    # Agar sidebar se change kiya, to state update karo
+    if selected != st.session_state.current_tab:
+        st.session_state.current_tab = selected
+        st.rerun()
 
-# --- 1. 🏠 HOME DASHBOARD (New) ---
-if selected == "Home":
+# --- 1. 🏠 HOME DASHBOARD (Active Buttons) ---
+if st.session_state.current_tab == "Home":
     st.title("👋 Welcome, Aman!")
-    st.markdown("### Aapka Personal AI Studio")
+    st.caption("Aapka Personal AI Studio")
     
-    # Dashboard Cards
-    c1, c2, c3 = st.columns(3)
+    # Row 1
+    c1, c2 = st.columns(2)
     with c1:
-        st.markdown("""<div class="dashboard-card"><h3>🎤 Studio</h3><p>Create Novels & Songs</p></div>""", unsafe_allow_html=True)
+        st.markdown("""<div class="dashboard-card"><h3>🎤 Studio</h3><p>Story & Audio</p></div>""", unsafe_allow_html=True)
+        if st.button("Open Studio", key="btn_studio"): navigate_to("Pocket Universe")
+        
     with c2:
-        st.markdown("""<div class="dashboard-card"><h3>📄 Docs</h3><p>Translate & Edit PDFs</p></div>""", unsafe_allow_html=True)
+        st.markdown("""<div class="dashboard-card"><h3>📜 Translator</h3><p>Desi Anuvad</p></div>""", unsafe_allow_html=True)
+        if st.button("Open Translator", key="btn_trans"): navigate_to("Desi Translator")
+    
+    # Row 2
+    c3, c4 = st.columns(2)
     with c3:
-        st.markdown("""<div class="dashboard-card"><h3>🔐 Vault</h3><p>Secure Private Data</p></div>""", unsafe_allow_html=True)
-    
+        st.markdown("""<div class="dashboard-card"><h3>🎵 Music</h3><p>Create Songs</p></div>""", unsafe_allow_html=True)
+        if st.button("Open Music Lab", key="btn_music"): navigate_to("Music Lab")
+        
+    with c4:
+        st.markdown("""<div class="dashboard-card"><h3>🔐 Vault</h3><p>Secure Files</p></div>""", unsafe_allow_html=True)
+        if st.button("Open Vault", key="btn_vault"): navigate_to("Vault")
+
     st.write("---")
-    st.subheader("🚀 Quick Actions")
-    if st.button("Start New Project"):
-        st.toast("Menu se koi Tool select karein!")
-    
-    st.image("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe", caption="Powered by Neural AI Engine", use_container_width=True)
+    st.caption("Tip: Upar left corner mein Arrow (>) dabakar full menu dekhein.")
 
 # --- 2. DESI TRANSLATOR ---
-elif selected == "Desi Translator":
+elif st.session_state.current_tab == "Desi Translator":
     st.title("📜 Desi Translator")
     c1, c2 = st.columns([1, 1])
     with c1:
@@ -207,76 +205,3 @@ elif selected == "Desi Translator":
         else:
             f = st.file_uploader("File", type=['txt','docx','pdf'])
             if f: txt = extract_text(f, f.name.split('.')[-1])
-    with c2:
-        st.subheader("Mapping (Optional)")
-        cmap = st.text_area("Map (e.g. Ye Tian=Prem):", height=100)
-        if st.button("Translate"):
-            if txt:
-                st.success(desi_anuvad_logic(txt[:5000], cmap))
-
-# --- 3. POCKET UNIVERSE ---
-elif selected == "Pocket Universe":
-    st.title("🎭 Pocket Universe")
-    c1, c2 = st.columns(2)
-    with c1: raw = st.text_area("Story Script:", height=200)
-    with c2:
-        char = st.selectbox("Character:", list(CHARACTERS.keys()))
-        mus = st.selectbox("Music:", list(MOOD_MUSIC.keys()))
-    if st.button("Generate Audio"):
-        if raw:
-            cd = CHARACTERS[char]
-            asyncio.run(generate_voice(raw, cd['voice'], cd['pitch'], cd['rate'], "v.mp3"))
-            download_file(MOOD_MUSIC[mus], "bg.mp3")
-            if HAS_MUSIC_ENGINE and mix_audio_safe("v.mp3", "bg.mp3", "final.mp3"):
-                st.audio("final.mp3")
-            else: st.audio("v.mp3")
-
-# --- 4. MUSIC LAB ---
-elif selected == "Music Lab":
-    st.title("🎵 Music Lab")
-    lyr = st.text_area("Lyrics:", height=150)
-    if st.button("Create Song"):
-        if lyr:
-            asyncio.run(generate_voice(lyr, "hi-IN-MadhurNeural", "-5Hz", "+10%", "voc.mp3"))
-            st.audio("voc.mp3")
-
-# --- 5. PDF TOOLS ---
-elif selected == "PDF Tools":
-    st.title("📄 PDF Tools")
-    upl = st.file_uploader("Images", accept_multiple_files=True)
-    if upl and st.button("Convert to PDF"):
-        imgs = [Image.open(x).convert("RGB") for x in upl]
-        imgs[0].save("doc.pdf", save_all=True, append_images=imgs[1:])
-        with open("doc.pdf", "rb") as f: st.download_button("Download", f)
-
-# --- 6. DOWNLOADER ---
-elif selected == "Downloader":
-    st.title("🎬 Downloader")
-    url = st.text_input("Video Link:")
-    if st.button("Download"):
-        with yt_dlp.YoutubeDL({'quiet':True}) as ydl:
-            try:
-                info = ydl.extract_info(url, download=False)
-                st.link_button("Download Video", info['url'])
-            except: st.error("Invalid Link")
-
-# --- 7. VAULT ---
-elif selected == "Vault":
-    st.title("🔐 Vault")
-    if st.text_input("PIN", type="password") == "1234":
-        st.file_uploader("Secret Files")
-
-# --- 8. 📜 ABOUT & PRIVACY (Legal) ---
-elif selected == "About & Privacy":
-    st.title("ℹ️ About Elite Super App")
-    st.info("Version 2.0 | Developed by Aman Tech")
-    
-    st.markdown("### 🔒 Privacy Policy")
-    st.write("""
-    1. **Data Safety:** Hum aapka koi bhi personal data (Photos/PDFs) apne server par save nahi karte.
-    2. **Local Processing:** Sab kuch aapke session tak hi seemit hai.
-    3. **Permissions:** Camera aur Storage sirf features use karne ke liye chahiye.
-    """)
-    
-    st.markdown("### 📞 Contact Us")
-    st.write("Email: support@elitetech.com")
