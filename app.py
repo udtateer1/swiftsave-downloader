@@ -24,63 +24,48 @@ import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
 
-# --- Page Config (Sidebar Expanded rakha hai taaki menu dikhe) ---
-st.set_page_config(page_title="Elite Super App", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
+# --- PAGE CONFIG (Sidebar collapsed rakha hai, par hum use nahi karenge) ---
+st.set_page_config(page_title="Elite Super App", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
 
-# --- SESSION STATE ---
+# --- SESSION STATE (App ka Dimaag) ---
 if 'current_tab' not in st.session_state:
     st.session_state.current_tab = "Home"
 
-def navigate_to(tab_name):
-    st.session_state.current_tab = tab_name
+def navigate_to(page):
+    st.session_state.current_tab = page
     st.rerun()
 
-# --- 🎨 CUSTOM CSS (Menu Fix) ---
+# --- 🎨 CUSTOM CSS (No Sidebar, Pure App Feel) ---
 st.markdown("""
     <style>
-    /* 1. Basic Reset */
+    /* 1. System UI Fixes */
     html, body {
-        overscroll-behavior-y: none; /* Refresh rokne ke liye */
+        overscroll-behavior-y: none !important;
+        overflow-y: auto !important;
+        background-color: #0e1117;
     }
     
-    /* 2. HEADER VISIBILITY - Isse dhyan se dekhein */
-    
-    /* Header ko 'Transparent' rakho par 'Visible' rakho */
-    header[data-testid="stHeader"] {
-        background: transparent !important;
-        z-index: 100 !important;
-    }
-
-    /* RIGHT SIDE ke tools (Deploy, GitHub, Settings) ko chhupao */
-    [data-testid="stToolbar"], 
-    [data-testid="stHeaderActionElements"], 
-    .stAppDeployButton {
-        visibility: hidden !important;
+    /* 2. PURA STREAMLIT HEADER GAYAB (No Menu, No Code Option) */
+    header, [data-testid="stHeader"], [data-testid="stToolbar"] {
         display: none !important;
+        visibility: hidden !important;
         height: 0px !important;
     }
 
-    /* MENU BUTTON (Arrow) ko highlight karo */
-    [data-testid="stSidebarCollapsedControl"] {
-        visibility: visible !important;
-        display: block !important;
-        color: white !important;
-        background-color: #1e1e1e !important; /* Button ke peeche dark background */
-        border-radius: 8px !important;
-        padding: 4px !important;
-        margin-top: 10px !important;
-        margin-left: 10px !important;
-        z-index: 99999 !important;
+    /* 3. Custom Top Bar (Back Button Area) */
+    .top-nav-bar {
+        background-color: #1e1e1e;
+        padding: 10px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #00e676;
+        display: flex;
+        align-items: center;
     }
 
-    /* 3. Top Line Decoration Hatao */
-    [data-testid="stDecoration"] {
-        visibility: hidden !important;
-    }
-
-    /* 4. Content Spacing (Taaki content button ke upar na chadh jaye) */
+    /* 4. Mobile Padding */
     .block-container {
-        padding-top: 4rem !important; 
+        padding-top: 1rem !important;
         padding-bottom: 5rem !important;
     }
 
@@ -92,11 +77,12 @@ st.markdown("""
         box-shadow: 0px 4px 6px rgba(0,0,0,0.2);
     }
     
-    /* 6. Card Design */
+    /* 6. Dashboard Cards */
     .dashboard-card {
-        background-color: #1e1e1e; padding: 15px; 
+        background-color: #1e1e1e; padding: 20px; 
         border-radius: 15px; border: 1px solid #333; 
-        text-align: center; margin-bottom: 10px;
+        text-align: center; margin-bottom: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -164,72 +150,50 @@ def desi_anuvad_logic(text, custom_map_text):
     for w, d in replacements.items(): translated = translated.replace(w, d)
     return translated
 
-# --- 🧭 SIDEBAR NAVIGATION ---
-with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=50)
-    st.title("Elite Super App")
-    
-    selected = option_menu(
-        menu_title="Main Menu",
-        options=["Home", "Desi Translator", "Pocket Universe", "Music Lab", "PDF Tools", "Downloader", "Vault"],
-        icons=["house", "translate", "mic", "music-note", "file-text", "download", "lock"],
-        default_index=0 if st.session_state.current_tab == "Home" else \
-                      1 if st.session_state.current_tab == "Desi Translator" else \
-                      2 if st.session_state.current_tab == "Pocket Universe" else \
-                      3 if st.session_state.current_tab == "Music Lab" else \
-                      4 if st.session_state.current_tab == "PDF Tools" else \
-                      5 if st.session_state.current_tab == "Downloader" else 6,
-    )
-    
-    if selected != st.session_state.current_tab:
-        st.session_state.current_tab = selected
-        st.rerun()
+# --- 🚀 CUSTOM NAVIGATION BAR (Har page ke upar dikhega) ---
+def render_header(title, show_back=True):
+    c1, c2 = st.columns([1, 4])
+    with c1:
+        if show_back:
+            if st.button("⬅️ Home", key=f"back_{title}"):
+                navigate_to("Home")
+        else:
+            st.write("🚀") # Home icon
+    with c2:
+        st.markdown(f"### {title}")
+    st.markdown("---")
 
-# --- 1. 🏠 HOME ---
+# --- 1. 🏠 HOME DASHBOARD ---
 if st.session_state.current_tab == "Home":
-    st.title("👋 Welcome, Aman!")
-    st.caption("Aapka Personal AI Studio")
+    st.title("👋 Hi Aman!")
+    st.markdown("Select a Tool:")
     
-    # Direct Navigation Buttons (Agar sidebar kaam na kare toh ye backup hai)
+    # Grid Layout for Dashboard
     c1, c2 = st.columns(2)
     with c1:
         st.markdown("""<div class="dashboard-card"><h3>🎤 Studio</h3><p>Story & Audio</p></div>""", unsafe_allow_html=True)
         if st.button("Open Studio", key="btn_studio"): navigate_to("Pocket Universe")
     with c2:
-        st.markdown("""<div class="dashboard-card"><h3>📜 Translator</h3><p>Desi Anuvad</p></div>""", unsafe_allow_html=True)
+        st.markdown("""<div class="dashboard-card"><h3>📜 Translate</h3><p>Desi Anuvad</p></div>""", unsafe_allow_html=True)
         if st.button("Open Translator", key="btn_trans"): navigate_to("Desi Translator")
     
     c3, c4 = st.columns(2)
     with c3:
-        st.markdown("""<div class="dashboard-card"><h3>🎵 Music</h3><p>Create Songs</p></div>""", unsafe_allow_html=True)
-        if st.button("Open Music Lab", key="btn_music"): navigate_to("Music Lab")
+        st.markdown("""<div class="dashboard-card"><h3>🎵 Music</h3><p>Rap & Songs</p></div>""", unsafe_allow_html=True)
+        if st.button("Open Music", key="btn_music"): navigate_to("Music Lab")
     with c4:
-        st.markdown("""<div class="dashboard-card"><h3>🔐 Vault</h3><p>Secure Files</p></div>""", unsafe_allow_html=True)
-        if st.button("Open Vault", key="btn_vault"): navigate_to("Vault")
+        st.markdown("""<div class="dashboard-card"><h3>🎬 Video</h3><p>Downloader</p></div>""", unsafe_allow_html=True)
+        if st.button("Open Downloader", key="btn_dl"): navigate_to("Downloader")
 
     st.write("---")
-    st.caption("👈 Sidebar Menu should be open now.")
+    # Extra Tools
+    if st.button("🔐 Private Vault"): navigate_to("Vault")
+    if st.button("📄 PDF Tools"): navigate_to("PDF Tools")
 
-# --- 2. TRANSLATOR ---
-elif st.session_state.current_tab == "Desi Translator":
-    st.title("📜 Desi Translator")
-    c1, c2 = st.columns([1, 1])
-    with c1:
-        src = st.radio("Input:", ["Paste", "Upload"], horizontal=True)
-        txt = ""
-        if src == "Paste": txt = st.text_area("English Text:", height=250)
-        else:
-            f = st.file_uploader("File", type=['txt','docx','pdf'])
-            if f: txt = extract_text(f, f.name.split('.')[-1])
-    with c2:
-        cmap = st.text_area("Name Mapping (e.g. Ye=Prem):", height=100)
-        if st.button("Translate"):
-            if txt: st.success(desi_anuvad_logic(txt[:5000], cmap))
-    if st.button("⬅️ Back to Home"): navigate_to("Home")
-
-# --- 3. POCKET UNIVERSE ---
+# --- 2. POCKET UNIVERSE ---
 elif st.session_state.current_tab == "Pocket Universe":
-    st.title("🎭 Pocket Universe")
+    render_header("Pocket Studio") # Back button automatic aayega
+    
     c1, c2 = st.columns(2)
     with c1: raw = st.text_area("Story Script:", height=200)
     with c2:
@@ -243,31 +207,36 @@ elif st.session_state.current_tab == "Pocket Universe":
             if HAS_MUSIC_ENGINE and mix_audio_safe("v.mp3", "bg.mp3", "final.mp3"):
                 st.audio("final.mp3")
             else: st.audio("v.mp3")
-    if st.button("⬅️ Back to Home"): navigate_to("Home")
+
+# --- 3. DESI TRANSLATOR ---
+elif st.session_state.current_tab == "Desi Translator":
+    render_header("Desi Translator")
+    
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        src = st.radio("Input:", ["Paste", "Upload"], horizontal=True)
+        txt = ""
+        if src == "Paste": txt = st.text_area("English Text:", height=250)
+        else:
+            f = st.file_uploader("File", type=['txt','docx','pdf'])
+            if f: txt = extract_text(f, f.name.split('.')[-1])
+    with c2:
+        cmap = st.text_area("Name Mapping (e.g. Ye=Prem):", height=100)
+        if st.button("Translate"):
+            if txt: st.success(desi_anuvad_logic(txt[:5000], cmap))
 
 # --- 4. MUSIC LAB ---
 elif st.session_state.current_tab == "Music Lab":
-    st.title("🎵 Music Lab")
+    render_header("Music Lab")
     lyr = st.text_area("Lyrics:", height=150)
     if st.button("Create Song"):
         if lyr:
             asyncio.run(generate_voice(lyr, "hi-IN-MadhurNeural", "-5Hz", "+10%", "voc.mp3"))
             st.audio("voc.mp3")
-    if st.button("⬅️ Back to Home"): navigate_to("Home")
 
-# --- 5. PDF TOOLS ---
-elif st.session_state.current_tab == "PDF Tools":
-    st.title("📄 PDF Tools")
-    upl = st.file_uploader("Images", accept_multiple_files=True)
-    if upl and st.button("Convert to PDF"):
-        imgs = [Image.open(x).convert("RGB") for x in upl]
-        imgs[0].save("doc.pdf", save_all=True, append_images=imgs[1:])
-        with open("doc.pdf", "rb") as f: st.download_button("Download", f)
-    if st.button("⬅️ Back to Home"): navigate_to("Home")
-
-# --- 6. DOWNLOADER ---
+# --- 5. DOWNLOADER ---
 elif st.session_state.current_tab == "Downloader":
-    st.title("🎬 Downloader")
+    render_header("4K Downloader")
     url = st.text_input("Video Link:")
     if st.button("Download"):
         with yt_dlp.YoutubeDL({'quiet':True}) as ydl:
@@ -275,11 +244,18 @@ elif st.session_state.current_tab == "Downloader":
                 info = ydl.extract_info(url, download=False)
                 st.link_button("Download Video", info['url'])
             except: st.error("Invalid Link")
-    if st.button("⬅️ Back to Home"): navigate_to("Home")
 
-# --- 7. VAULT ---
+# --- 6. VAULT ---
 elif st.session_state.current_tab == "Vault":
-    st.title("🔐 Vault")
+    render_header("Secret Vault")
     if st.text_input("PIN", type="password") == "1234":
         st.file_uploader("Secret Files")
-    if st.button("⬅️ Back to Home"): navigate_to("Home")
+
+# --- 7. PDF TOOLS ---
+elif st.session_state.current_tab == "PDF Tools":
+    render_header("PDF Tools")
+    upl = st.file_uploader("Images", accept_multiple_files=True)
+    if upl and st.button("Convert to PDF"):
+        imgs = [Image.open(x).convert("RGB") for x in upl]
+        imgs[0].save("doc.pdf", save_all=True, append_images=imgs[1:])
+        with open("doc.pdf", "rb") as f: st.download_button("Download", f)
